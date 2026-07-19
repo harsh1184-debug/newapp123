@@ -3,8 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { onAuthChange } from "./services/authService";
 import { setUser } from "./redux/authSlice";
 import { createUserProfile } from "./services/chatService";
-import AuthScreen from "./components /authScreen";
-import ChatScreen from "./components /chatScreen";
+import AuthScreen from "./components/authScreen";
+import ChatScreen from "./components/chatScreen";
 
 function App() {
   const dispatch = useDispatch();
@@ -21,7 +21,7 @@ function App() {
         dispatch(setUser(null));
       }
     });
-    return () => unsubscribe;
+    return unsubscribe;
   }, [dispatch]);
 
   return isAuthenticated ? <ChatScreen /> : <AuthScreen />;

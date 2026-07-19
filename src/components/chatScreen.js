@@ -3,8 +3,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../redux/authSlice';
 import { setActiveChat, setMessages, setConversations, setAllUsers, clearActiveChat } from '../redux/chatSlice';
 import { Box, Typography, TextField, Avatar, IconButton, InputAdornment } from '@mui/material';
-import { Logout, Search, AddComment, MoreVert, Send, ArrowBack } from '@mui/icons-material';
-import { getAllUsers, getOrCreateChat, sendPrivateMessage, subscribeToPrivateMessages, subscribeToUserChats } from '../services/chatService';
+import { Logout, Search, AddComment, MoreVert, Send, ArrowBack, EmojiEmotions, Add, Mic } from '@mui/icons-material';
+import { subscribeToAllUsers, getOrCreateChat, sendPrivateMessage, subscribeToPrivateMessages, subscribeToUserChats } from '../services/chatService';
 
 function ChatScreen() {
   const dispatch = useDispatch();
@@ -14,9 +14,11 @@ function ChatScreen() {
   const [view, setView] = useState("users");
 
   useEffect(() => {
-    if (user) {
-      getAllUsers(user.uid).then((users) => dispatch(setAllUsers(users)));
-    }
+    if (!user) return;
+    const unsubscribe = subscribeToAllUsers(user.uid, (users) => {
+      dispatch(setAllUsers(users));
+    });
+    return unsubscribe;
   }, [user, dispatch]);
 
   useEffect(() => {
@@ -43,9 +45,28 @@ function ChatScreen() {
   }, [user, dispatch]);
 
   const handleSend = async () => {
+    console.log("handleSend triggered:", {
+      typedMessage: typedMessage.trim(),
+      activeChatId,
+      userUid: user?.uid,
+      activeChatUserUid: activeChatUser?.uid
+    });
     if (typedMessage.trim() && activeChatId && user && activeChatUser) {
-      await sendPrivateMessage(activeChatId, typedMessage, user, activeChatUser);
-      setTypedMessage('');
+      try {
+        await sendPrivateMessage(activeChatId, typedMessage, user, activeChatUser);
+        console.log("Message sent successfully!");
+        setTypedMessage('');
+      } catch (err) {
+        console.error("Failed to send message:", err);
+        alert("Failed to send message: " + err.message + "\n\nNote: If this is a 'Permission denied' error, please verify that your Firebase Realtime Database Security Rules allow read/write access for authenticated users.");
+      }
+    } else {
+      console.warn("handleSend blocked due to missing fields:", {
+        hasText: !!typedMessage.trim(),
+        hasChatId: !!activeChatId,
+        hasUser: !!user,
+        hasActiveChatUser: !!activeChatUser
+      });
     }
   };
 
@@ -168,13 +189,34 @@ function ChatScreen() {
                   value={typedMessage}
                   onChange={(e) => setTypedMessage(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleSend(); }}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <IconButton size="small" sx={{ color: '#888', p: 0.2 }}>
+                            <EmojiEmotions fontSize="small" />
+                          </IconButton>
+                          <IconButton size="small" sx={{ color: '#888', p: 0.2 }}>
+                            <Add fontSize="small" />
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton size="small" sx={{ color: '#888', p: 0.2 }}>
+                            <Mic fontSize="small" />
+                          </IconButton>
+                        </InputAdornment>
+                      )
+                    }
+                  }}
                   sx={{
-                    '& .MuiOutlinedInput-root': { bgcolor: '#303131', borderRadius: 2, color: '#fff' },
+                    '& .MuiOutlinedInput-root': { bgcolor: '#303131', borderRadius: '50px', color: '#fff', pl: 1.5, pr: 1.5 },
                     '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
                     '& .MuiInputBase-input::placeholder': { color: '#888', opacity: 1 },
                   }}
                 />
-                <IconButton sx={{ color: '#fff', bgcolor: '#075E54', borderRadius: 2, p: 1.5, '&:hover': { bgcolor: '#055242' } }} onClick={handleSend}>
+                <IconButton sx={{ color: '#fff', bgcolor: '#075E54', borderRadius: '50%', p: 1.5, '&:hover': { bgcolor: '#055242' } }} onClick={handleSend}>
                   <Send fontSize="small" />
                 </IconButton>
               </Box>

@@ -11,7 +11,7 @@ const firebaseConfig = {
   messagingSenderId: "130641670855",
   appId: "1:130641670855:web:45d3fac15f1787b23d04e2",
   measurementId: "G-80FK31CPER",
-  databaseURL: "https://whatsapp-messanger-4ed64-default-rtdb.firebaseio.com"
+  databaseURL: "https://whatsapp-messanger-4ed64-default-rtdb.asia-southeast1.firebasedatabase.app"
 };
 
 const app = initializeApp(firebaseConfig);
